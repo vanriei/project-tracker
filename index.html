@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project Tracker</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" defer></script>
 <style>
   /* ── Reset & Variables ───────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1860,7 +1860,17 @@ document.getElementById('btn-signout').addEventListener('click', signOut);
 // ═══════════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════════
-initAuth();
+// Wait for Google Identity Services to finish loading before init
+function waitForGSI(attempts) {
+  if (typeof google !== 'undefined' && google.accounts) {
+    initAuth();
+  } else if (attempts > 0) {
+    setTimeout(function() { waitForGSI(attempts - 1); }, 200);
+  } else {
+    initAuth(); // fall through anyway (handles file:// / notConfigured cases)
+  }
+}
+waitForGSI(25);
 </script>
 </body>
 </html>
