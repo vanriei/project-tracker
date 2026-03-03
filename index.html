@@ -927,7 +927,7 @@
     color: var(--text-muted);
     font-weight: 500;
   }
-  #btn-signout {
+  #btn-signout, .btn-data {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-muted);
@@ -939,6 +939,8 @@
     transition: all var(--transition);
   }
   #btn-signout:hover { border-color: var(--blk-text); color: var(--blk-text); }
+  .btn-data:hover { border-color: var(--accent2); color: var(--accent2); }
+  #import-file { display: none; }
 </style>
 </head>
 <body>
@@ -1004,6 +1006,9 @@
   <div id="user-info">
     <img id="user-avatar" src="" alt="Avatar" />
     <span id="user-name"></span>
+    <button class="btn-data" id="btn-export" title="Export your data as a backup file">Export</button>
+    <button class="btn-data" id="btn-import" title="Import data from a backup file">Import</button>
+    <input type="file" id="import-file" accept=".json">
     <button id="btn-signout">Sign out</button>
   </div>
   <button id="btn-new-proj" class="btn-primary" style="display:none">
@@ -1188,6 +1193,32 @@ function restoreSession() {
     currentProjectId = state.projects.length ? state.projects[0].id : null;
     return true;
   } catch { return false; }
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'project-tracker-backup.json';
+  a.click();
+}
+
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.projects) { alert('Invalid backup file.'); return; }
+      if (!confirm('This will replace your current data with the imported data. Continue?')) return;
+      state = imported;
+      saveData();
+      currentProjectId = state.projects.length ? state.projects[0].id : null;
+      render();
+      alert('Data imported successfully!');
+    } catch { alert('Could not read file. Make sure it\'s a valid backup.'); }
+  };
+  reader.readAsText(file);
 }
 
 function signOut() {
@@ -1865,6 +1896,9 @@ document.addEventListener('keydown', (e) => {
 //  EVENT LISTENERS (auth)
 // ═══════════════════════════════════════════════════════════════
 document.getElementById('btn-signout').addEventListener('click', signOut);
+document.getElementById('btn-export').addEventListener('click', exportData);
+document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file').click());
+document.getElementById('import-file').addEventListener('change', (e) => { importData(e.target.files[0]); e.target.value = ''; });
 
 // ═══════════════════════════════════════════════════════════════
 //  INIT
