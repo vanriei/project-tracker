@@ -1166,6 +1166,11 @@ function handleCredentialResponse(response) {
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
   STORE_KEY = 'pt_data_v2_' + currentUser.id;
+  // Migrate old pre-auth data to this Google account (only if account has no data yet)
+  if (!localStorage.getItem(STORE_KEY)) {
+    const legacy = localStorage.getItem('pt_data_v2') || localStorage.getItem('pt_data_v2_local');
+    if (legacy) localStorage.setItem(STORE_KEY, legacy);
+  }
   state = loadData();
   currentProjectId = state.projects.length ? state.projects[0].id : null;
   showApp();
@@ -1213,6 +1218,10 @@ function showApp() {
 function localDevBypass() {
   currentUser = { id: 'local', email: 'local', name: 'Local User', given: 'You', picture: '' };
   STORE_KEY = 'pt_data_v2_local';
+  // Migrate old data saved before Google auth was added
+  if (!localStorage.getItem('pt_data_v2_local') && localStorage.getItem('pt_data_v2')) {
+    localStorage.setItem('pt_data_v2_local', localStorage.getItem('pt_data_v2'));
+  }
   state = loadData();
   currentProjectId = state.projects.length ? state.projects[0].id : null;
   showApp();
